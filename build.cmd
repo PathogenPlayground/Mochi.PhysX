@@ -56,18 +56,18 @@ if not exist %PHYSX_SDK_ROOT%\physx\compiler\%PHYSX_PRESET%\INSTALL.vcxproj (
 call tooling/vs-tools.cmd
 pushd %PHYSX_SDK_ROOT%\physx\compiler\%PHYSX_PRESET%\
 if "%BUILD_MODE%" == "" (
-    msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=debug
-    msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=checked
-    msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=profile
-    msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=release
+    msbuild INSTALL.vcxproj /maxCpuCount /p:Platform=x64 /p:Configuration=debug
+    msbuild INSTALL.vcxproj /maxCpuCount /p:Platform=x64 /p:Configuration=checked
+    msbuild INSTALL.vcxproj /maxCpuCount /p:Platform=x64 /p:Configuration=profile
+    msbuild INSTALL.vcxproj /maxCpuCount /p:Platform=x64 /p:Configuration=release
 ) else if /i "%BUILD_MODE%" == "debug" (
-    msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=debug
+    msbuild INSTALL.vcxproj /maxCpuCount /p:Platform=x64 /p:Configuration=debug
 ) else if /i "%BUILD_MODE%" == "checked" (
-    msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=checked
+    msbuild INSTALL.vcxproj /maxCpuCount /p:Platform=x64 /p:Configuration=checked
 ) else if /i "%BUILD_MODE%" == "profile" (
-    msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=profile
+    msbuild INSTALL.vcxproj /maxCpuCount /p:Platform=x64 /p:Configuration=profile
 ) else if /i "%BUILD_MODE%" == "release" (
-    msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=release
+    msbuild INSTALL.vcxproj /maxCpuCount /p:Platform=x64 /p:Configuration=release
 ) else (
     echo '%BUILD_MODE%' is not a known configuration. 1>&2
     exit /B 1
