@@ -49,14 +49,9 @@ jobs:
       # ----------------------------------------------------------------------- Cache
       #TODO
 
-      # ----------------------------------------------------------------------- Get Build Configuration
-      - name: Get Build Configuration
-        id: build-configuration
-        run: ${{matrix.build-command}} emit-configuration-for-ci
-
       # ----------------------------------------------------------------------- Build PhysX
       - name: Build PhysX
-        run: ${{matrix.build-command}} ${{matrix.configuration}}
+        run: ${{matrix.platform.build-command}} ${{matrix.configuration}}
 
       # ----------------------------------------------------------------------- Upload Artifacts
       # For release builds we collect everything (the binaries and the headers)
