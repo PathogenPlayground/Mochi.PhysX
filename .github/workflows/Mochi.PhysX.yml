@@ -30,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        rid: [win-x64, linux-x64, linux-arm64, osx-x64]
+        rid: [win-x64]
         configuration:
           - name: Debug
             id: debug
