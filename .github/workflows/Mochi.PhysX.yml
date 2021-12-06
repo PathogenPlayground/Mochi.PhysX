@@ -54,12 +54,29 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
-      
-      # ----------------------------------------------------------------------- Cache
-      #TODO
+
+      # ----------------------------------------------------------------------- Setup Python
+      - name: Setup Python 3.8
+        if: matrix.platform.skip-tool-install != true
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      # ----------------------------------------------------------------------- Get LLVM Revision
+      - name: Get PhysX Revision
+        id: physx
+        run: python .github/workflows/get-physx-revision.py
 
       # ----------------------------------------------------------------------- Build PhysX
+      - name: Load cached PhysX build outputs
+        id: cached-physx
+        uses: actions/cache@v2
+        with:
+          key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
+          path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
+
       - name: Build PhysX
+        if: steps.cached-physx.outputs.cache-hit != 'true'
         run: ${{matrix.build-command}} ${{matrix.configuration.id}}
 
       # ----------------------------------------------------------------------- Upload Artifacts
@@ -67,10 +84,10 @@ jobs:
       # For everything else we collect just the binaries
       # We collect the headers for release since the headers in the `install` directory are what we actually use to generate
       - name: Collect PhysX Build Artifacts
-        if: ${{matrix.configuration.id}} != 'release'
+        if: steps.cached-physx.outputs.cache-hit != 'true' && matrix.configuration.id != 'release'
         run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}/bin
       - name: Collect PhysX Build Artifacts (Release)
-        if: ${{matrix.configuration.id}} == 'release'
+        if: steps.cached-physx.outputs.cache-hit != 'true' && matrix.configuration.id == 'release'
         run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}
 
       - name: Upload PhysX Build Artifacts
@@ -130,7 +147,11 @@ jobs:
           name: physx-${{matrix.rid}}-release
       
       - name: Extract PhysX Builds
-        run: tar --keep-old-files -xf physx-${{matrix.rid}}-*.tar.gz
+        run: |
+          tar --keep-old-files -xf physx-${{matrix.rid}}-debug.tar.gz
+          tar --keep-old-files -xf physx-${{matrix.rid}}-checked.tar.gz
+          tar --keep-old-files -xf physx-${{matrix.rid}}-profile.tar.gz
+          tar --keep-old-files -xf physx-${{matrix.rid}}-release.tar.gz
 
       # ----------------------------------------------------------------------- Generate Mochi.PhysX
       - name: Restore Mochi.PhysX.Generator
