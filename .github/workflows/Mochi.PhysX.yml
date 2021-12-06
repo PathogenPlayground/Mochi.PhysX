@@ -36,8 +36,16 @@ jobs:
             rid: win-x64
             build-command: ./build.cmd
             physx-install-path: external/PhysX/physx/install/Mochi.PhysX.Windows.x64/
-        configuration: ['Debug', 'Checked', 'Profile', 'Release']
-    name: PhysX ${{matrix.platform.name}} ${{matrix.configuration}}
+        configuration:
+          - name: Debug
+            id: debug
+          - name: Checked
+            id: checked
+          - name: Profile
+            id: profile
+          - name: Release
+            id: release
+    name: Build PhysX ${{matrix.platform.name}} ${{matrix.configuration.name}}
     runs-on: ${{matrix.platform.os}}
     steps:
       # ----------------------------------------------------------------------- Checkout
@@ -51,24 +59,24 @@ jobs:
 
       # ----------------------------------------------------------------------- Build PhysX
       - name: Build PhysX
-        run: ${{matrix.platform.build-command}} ${{matrix.configuration}}
+        run: ${{matrix.platform.build-command}} ${{matrix.configuration.id}}
 
       # ----------------------------------------------------------------------- Upload Artifacts
       # For release builds we collect everything (the binaries and the headers)
       # For everything else we collect just the binaries
       # We collect the headers for release since the headers in the `install` directory are what we actually use to generate
       - name: Collect PhysX Build Artifacts
-        if: ${{matrix.configuration}} != 'Release'
-        run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration}}.tar.gz ${{matrix.physx-install-path}}bin/
+        if: ${{matrix.configuration.id}} != 'release'
+        run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}bin/
       - name: Collect PhysX Build Artifacts (Release)
-        if: ${{matrix.configuration}} == 'Release'
-        run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration}}.tar.gz ${{matrix.physx-install-path}}
+        if: ${{matrix.configuration.id}} == 'release'
+        run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}
 
       - name: Upload PhysX Build Artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: physx-${{matrix.rid}}-${{matrix.configuration}}
-          path: physx-${{matrix.rid}}-${{matrix.configuration}}.tar.gz
+          name: physx-${{matrix.rid}}-${{matrix.configuration.id}}
+          path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
           if-no-files-found: error
 
   # =====================================================================================================================================================================
@@ -84,7 +92,7 @@ jobs:
             os: windows-latest
             rid: win-x64
             build-command: ./build.cmd
-    name: Mochi.PhysX ${{matrix.name}}
+    name: Build Mochi.PhysX ${{matrix.name}}
     runs-on: ${{matrix.os}}
     steps:
       # ----------------------------------------------------------------------- Checkout
@@ -106,19 +114,19 @@ jobs:
       - name: Download PhysX ${{matrix.name}} Debug Build
         uses: actions/download-artifact@v2
         with:
-          name: physx-${{matrix.rid}}-Debug
+          name: physx-${{matrix.rid}}-debug
       - name: Download PhysX ${{matrix.name}} Checked Build
         uses: actions/download-artifact@v2
         with:
-          name: physx-${{matrix.rid}}-Checked
+          name: physx-${{matrix.rid}}-checked
       - name: Download PhysX ${{matrix.name}} Profile Build
         uses: actions/download-artifact@v2
         with:
-          name: physx-${{matrix.rid}}-Profile
+          name: physx-${{matrix.rid}}-profile
       - name: Download PhysX ${{matrix.name}} Release Build
         uses: actions/download-artifact@v2
         with:
-          name: physx-${{matrix.rid}}-Release
+          name: physx-${{matrix.rid}}-release
       
       - name: Extract PhysX Builds
         run: tar --keep-old-files -xf physx-${{matrix.rid}}-*.tar.gz

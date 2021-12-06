@@ -11,7 +11,7 @@ set BUILD_MODE=%1
 
 :: If we're only generating skip all the native build setup
 :: (It's assumed that PhysX has been cloned and built already. If it hasn't the generator will complain)
-if "%BUILD_MODE%" == "generate" (
+if /i "%BUILD_MODE%" == "generate" (
     :: Initializing the Visual Studio tools is not strictly necessary, but it does affect Biohazrd.
     :: As such we do it for the sake of consistency between invoking build.cmd with and without arguments.
     call tooling/vs-tools.cmd
@@ -60,13 +60,13 @@ if "%BUILD_MODE%" == "" (
     msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=checked
     msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=profile
     msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=release
-) else if "%BUILD_MODE%" == "debug" (
+) else if /i "%BUILD_MODE%" == "debug" (
     msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=debug
-) else if "%BUILD_MODE%" == "checked" (
+) else if /i "%BUILD_MODE%" == "checked" (
     msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=checked
-) else if "%BUILD_MODE%" == "profile" (
+) else if /i "%BUILD_MODE%" == "profile" (
     msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=profile
-) else if "%BUILD_MODE%" == "release" (
+) else if /i "%BUILD_MODE%" == "release" (
     msbuild INSTALL.vcxproj /p:Platform=x64 /p:Configuration=release
 ) else (
     echo '%BUILD_MODE%' is not a known configuration. 1>&2
