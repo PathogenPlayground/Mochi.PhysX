@@ -56,7 +56,8 @@ if (!Directory.Exists(physXSdkRoot))
     return 1;
 }
 
-string physXBinariesDirectoryPath = Path.Combine(physXSdkRoot, "physx", "install", physXPresetName, "bin");
+string physXInstallRoot = Path.Combine(physXSdkRoot, "physx", "install", physXPresetName);
+string physXBinariesDirectoryPath = Path.Combine(physXInstallRoot, "bin");
 {
     string? binarySubdirectory = null;
 
@@ -88,8 +89,12 @@ string physXBinariesDirectoryPath = Path.Combine(physXSdkRoot, "physx", "install
 
 string[] includeDirectories =
 {
+#if false
     Path.Combine(physXSdkRoot, "physx", "include"),
     Path.Combine(physXSdkRoot, "pxshared", "include")
+#else
+    Path.Combine(physXInstallRoot, "include")
+#endif
 };
 
 foreach (string includeDirectory in includeDirectories)
