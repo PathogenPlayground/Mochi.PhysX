@@ -17,7 +17,7 @@ namespace Mochi.PhysX.Sample
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine($"PhysX native runtime build information: '{BuildInfo}'...");
+            Console.WriteLine($"PhysX native runtime build information: '{MochiPhysX.BuildInfo}'...");
 
             //---------------------------------------------------------------------------------------------------------------------------------------
             Console.WriteLine("Initializing error callback");
