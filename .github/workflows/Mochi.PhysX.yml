@@ -30,12 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - name: Windows x64
-            os: windows-latest
-            rid: win-x64
-            build-command: ./build.cmd
-            physx-install-path: external/PhysX/physx/install/Mochi.PhysX.Windows.x64/
+        rid: [win-x64, linux-x64, linux-arm64, osx-x64]
         configuration:
           - name: Debug
             id: debug
@@ -45,8 +40,14 @@ jobs:
             id: profile
           - name: Release
             id: release
-    name: Build PhysX ${{matrix.platform.name}} ${{matrix.configuration.name}}
-    runs-on: ${{matrix.platform.os}}
+        include:
+          - rid: win-x64
+            name: Windows x64
+            os: windows-latest
+            build-command: ./build.cmd
+            physx-install-path: external/PhysX/physx/install/Mochi.PhysX.Windows.x64/
+    name: Build PhysX ${{matrix.name}} ${{matrix.configuration.name}}
+    runs-on: ${{matrix.os}}
     steps:
       # ----------------------------------------------------------------------- Checkout
       - name: Checkout
@@ -59,7 +60,7 @@ jobs:
 
       # ----------------------------------------------------------------------- Build PhysX
       - name: Build PhysX
-        run: ${{matrix.platform.build-command}} ${{matrix.configuration.id}}
+        run: ${{matrix.build-command}} ${{matrix.configuration.id}}
 
       # ----------------------------------------------------------------------- Upload Artifacts
       # For release builds we collect everything (the binaries and the headers)
