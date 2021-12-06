@@ -45,7 +45,7 @@ jobs:
             name: Windows x64
             os: windows-latest
             build-command: ./build.cmd
-            physx-install-path: external/PhysX/physx/install/Mochi.PhysX.Windows.x64/
+            physx-install-path: external/PhysX/physx/install/Mochi.PhysX.Windows.x64
     name: Build PhysX ${{matrix.name}} ${{matrix.configuration.name}}
     runs-on: ${{matrix.os}}
     steps:
@@ -68,7 +68,7 @@ jobs:
       # We collect the headers for release since the headers in the `install` directory are what we actually use to generate
       - name: Collect PhysX Build Artifacts
         if: ${{matrix.configuration.id}} != 'release'
-        run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}bin/
+        run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}/bin
       - name: Collect PhysX Build Artifacts (Release)
         if: ${{matrix.configuration.id}} == 'release'
         run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}
