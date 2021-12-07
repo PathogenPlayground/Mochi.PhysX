@@ -234,6 +234,7 @@ jobs:
         run: tar -cvzf Mochi.PhysX-packages-${{matrix.rid}}.tar.gz packages
       - name: Upload NuGet Packages
         if: always()
+        uses: actions/upload-artifact@v2
         with:
           name: Packages
           if-no-files-found: error
