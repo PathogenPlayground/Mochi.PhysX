@@ -103,7 +103,7 @@ jobs:
 
       - name: Compress PhysX build artifacts
         if: steps.cached-physx.outputs.cache-hit != 'true'
-        run: tar -cvzf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar
+        run: gzip physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar
 
       - name: Upload PhysX build artifacts
         uses: actions/upload-artifact@v2
