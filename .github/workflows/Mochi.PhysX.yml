@@ -117,6 +117,9 @@ jobs:
       - name: Checkout
         # We intentionally don't checkout submodules here, Mochi.PhysX.Generator should only use outputs from building PhysX
         uses: actions/checkout@v2
+        #TODO: Actually we need them for Biohazrd still. Remove this once we switch to NuGet packages for it.
+        with:
+          submodules: recursive
       
       # ----------------------------------------------------------------------- Setup .NET
       - name: Setup .NET
