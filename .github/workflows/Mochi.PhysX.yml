@@ -46,7 +46,7 @@ jobs:
             os: windows-latest
             build-command: ./build.cmd
             physx-install-path: external/PhysX/physx/install/Mochi.PhysX.Windows.x64
-    name: Build PhysX ${{matrix.name}} ${{matrix.configuration.name}}
+    name: PhysX ${{matrix.name}} ${{matrix.configuration.name}}
     runs-on: ${{matrix.os}}
     steps:
       # ----------------------------------------------------------------------- Checkout
@@ -62,8 +62,8 @@ jobs:
         with:
           python-version: '3.8'
 
-      # ----------------------------------------------------------------------- Get LLVM Revision
-      - name: Get PhysX Revision
+      # ----------------------------------------------------------------------- Get PhysX revision
+      - name: Get PhysX revision
         id: physx
         run: python .github/workflows/get-physx-revision.py
 
@@ -79,18 +79,18 @@ jobs:
         if: steps.cached-physx.outputs.cache-hit != 'true'
         run: ${{matrix.build-command}} ${{matrix.configuration.id}}
 
-      # ----------------------------------------------------------------------- Upload Artifacts
+      # ----------------------------------------------------------------------- Upload artifacts
       # For release builds we collect everything (the binaries and the headers)
       # For everything else we collect just the binaries
       # We collect the headers for release since the headers in the `install` directory are what we actually use to generate
-      - name: Collect PhysX Build Artifacts
+      - name: Collect PhysX build artifacts
         if: steps.cached-physx.outputs.cache-hit != 'true' && matrix.configuration.id != 'release'
         run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}/bin
-      - name: Collect PhysX Build Artifacts (Release)
+      - name: Collect PhysX build artifacts (Release)
         if: steps.cached-physx.outputs.cache-hit != 'true' && matrix.configuration.id == 'release'
         run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}
 
-      - name: Upload PhysX Build Artifacts
+      - name: Upload PhysX build artifacts
         uses: actions/upload-artifact@v2
         with:
           name: physx-${{matrix.rid}}-${{matrix.configuration.id}}
@@ -110,7 +110,7 @@ jobs:
             os: windows-latest
             rid: win-x64
             build-command: ./build.cmd
-    name: Build Mochi.PhysX ${{matrix.name}}
+    name: Mochi.PhysX ${{matrix.name}}
     runs-on: ${{matrix.os}}
     steps:
       # ----------------------------------------------------------------------- Checkout
@@ -131,20 +131,20 @@ jobs:
             5.0.x
             6.0.x
       
-      # ----------------------------------------------------------------------- Download PhysX Builds
-      - name: Download PhysX ${{matrix.name}} Debug Build
+      # ----------------------------------------------------------------------- Download PhysX builds
+      - name: Download PhysX ${{matrix.name}} debug build
         uses: actions/download-artifact@v2
         with:
           name: physx-${{matrix.rid}}-debug
-      - name: Download PhysX ${{matrix.name}} Checked Build
+      - name: Download PhysX ${{matrix.name}} checked build
         uses: actions/download-artifact@v2
         with:
           name: physx-${{matrix.rid}}-checked
-      - name: Download PhysX ${{matrix.name}} Profile Build
+      - name: Download PhysX ${{matrix.name}} profile build
         uses: actions/download-artifact@v2
         with:
           name: physx-${{matrix.rid}}-profile
-      - name: Download PhysX ${{matrix.name}} Release Build
+      - name: Download PhysX ${{matrix.name}} release build
         uses: actions/download-artifact@v2
         with:
           name: physx-${{matrix.rid}}-release
@@ -155,6 +155,17 @@ jobs:
           tar --keep-old-files -xf physx-${{matrix.rid}}-checked.tar.gz
           tar --keep-old-files -xf physx-${{matrix.rid}}-profile.tar.gz
           tar --keep-old-files -xf physx-${{matrix.rid}}-release.tar.gz
+
+      # ----------------------------------------------------------------------- Configure build
+      - name: Configure build
+        run: python .github/workflows/configure-build.py
+        env:
+          github_event_name: ${{github.event_name}}
+          github_ref: ${{github.ref}}
+          github_run_number: ${{github.run_number}}
+          release_version: ${{github.event.release.tag_name}}
+          workflow_dispatch_version: ${{github.event.inputs.version}}
+          workflow_dispatch_will_publish_packages: ${{github.event.inputs.will_publish_packages}}
 
       # ----------------------------------------------------------------------- Generate Mochi.PhysX
       - name: Restore Mochi.PhysX.Generator
