@@ -95,11 +95,13 @@ jobs:
 
       # We only use the headers from the release build (they should match between all of them)
       # (These are the headers we actually use to generate the bindings.)
+      # This also includes the PhysX license file to let subsequent jobs avoid cloning PhysX for it
       - name: Collect PhysX headers
         if: steps.cached-physx.outputs.cache-hit != 'true' && matrix.configuration.id == 'release'
         run: |
           tar -rvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar ${{matrix.physx-install-path}}/include
           tar -rvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar ${{matrix.physx-install-path}}/source
+          tar -rvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar external/PhysX/LICENSE.md
 
       - name: Compress PhysX build artifacts
         if: steps.cached-physx.outputs.cache-hit != 'true'
@@ -108,7 +110,6 @@ jobs:
       - name: Upload PhysX build artifacts
         uses: actions/upload-artifact@v2
         with:
-          #name: physx-${{matrix.rid}}-${{matrix.configuration.id}}
           name: physx-${{matrix.rid}}
           path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
           if-no-files-found: error
@@ -152,22 +153,6 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: physx-${{matrix.rid}}
-#      - name: Download PhysX ${{matrix.name}} debug build
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: physx-${{matrix.rid}}-debug
-#      - name: Download PhysX ${{matrix.name}} checked build
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: physx-${{matrix.rid}}-checked
-#      - name: Download PhysX ${{matrix.name}} profile build
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: physx-${{matrix.rid}}-profile
-#      - name: Download PhysX ${{matrix.name}} release build
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: physx-${{matrix.rid}}-release
       
       - name: Extract PhysX Builds
         run: |
@@ -196,3 +181,61 @@ jobs:
       
       - name: Generate Mochi.PhysX
         run: ${{matrix.build-command}} generate
+      
+      # ----------------------------------------------------------------------- Build Mochi.PhysX
+      - name: Restore Mochi.PhysX.${{matrix.rid}}
+        run: dotnet restore Mochi.PhysX
+      
+      - name: Build Mochi.PhysX.${{matrix.rid}}
+        # MochiPhysXNativeBuildVariant here determines the native runtime variant which will be referenced by default
+        # (It must be the same as the pack below.)
+        run: dotnet build Mochi.PhysX --no-restore --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=release
+
+      # ----------------------------------------------------------------------- Pack Mochi.PhysX
+      - name: Pack Mochi.PhysX.${{matrix.rid}}
+        # See note about MochiPhysXNativeBuildVariant above
+        run: dotnet pack Mochi.PhysX --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=release
+      
+      # ----------------------------------------------------------------------- Pack Mochi.PhysX.Native variants
+      - name: Restore Mochi.PhysX.Native
+        run: dotnet restore Mochi.PhysX.Native
+
+      - name: Pack Mochi.PhysX.Native.${{matrix.rid}}-debug
+        run: dotnet pack Mochi.PhysX.Native --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=debug
+      - name: Pack Mochi.PhysX.Native.${{matrix.rid}}-checked
+        run: dotnet pack Mochi.PhysX.Native --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=checked
+      - name: Pack Mochi.PhysX.Native.${{matrix.rid}}-profile
+        run: dotnet pack Mochi.PhysX.Native --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=profile
+      - name: Pack Mochi.PhysX.Native.${{matrix.rid}}
+        run: dotnet pack Mochi.PhysX.Native --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=release
+      
+      # ----------------------------------------------------------------------- Pack Mochi.PhysX.Ref
+      # (This package is currently just a dummy package which references Mochi.PhysX.win-x64. Eventually it will be a least common denominator reference-only package.)
+      - name: Restore Mochi.PhysX.Ref
+        run: dotnet restore Mochi.PhysX.Ref
+
+      - name: Pack Mochi.PhysX.Ref
+        run: dotnet pack Mochi.PhysX.Ref --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=release
+      
+      # ----------------------------------------------------------------------- Upload Artifacts
+      # All of these steps ignore failure so that we get what artifacts are available when things are broken
+      - name: Collect Native Binaries
+        if: always()
+        run: tar -cvzf Mochi.PhysX.Native-${{matrix.rid}}.tar.gz bin/Mochi.PhysX.Native
+      - name: Upload Mochi.PhysX.Native Binaries
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Mochi.PhysX.Native-${matrix.rid}
+          path: Mochi.PhysX.Native-${matrix.rid}.tar.gz
+      
+      - name: Collect NuGet Packages
+        if: always()
+        run: tar -cvzf Mochi.PhysX-packages-${{matrix.rid}}.tar.gz packages
+      - name: Upload NuGet Packages
+        if: always()
+        with:
+          name: Packages
+          if-no-files-found: error
+          path: Mochi.PhysX-packages-${{matrix.rid}}.tar.gz
+

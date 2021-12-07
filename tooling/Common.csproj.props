@@ -16,6 +16,12 @@
     <Copyright>Copyright David Maas and Contributors</Copyright>
     <Product>Mochi.PhysX</Product>
 
+    <Description>Automatically generated C# bindings for NVIDIA PhysX.</Description>
+
+    <!-- Projects should not be packable or publishable by default -->
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
+
     <!-- Ignore warnings about stable packages referencing pre-release ones. -->
     <NoWarn>$(NoWarn);NU5104</NoWarn>
 

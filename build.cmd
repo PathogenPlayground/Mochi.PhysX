@@ -77,5 +77,7 @@ popd
 :: Run generator (will also build Mochi.PhysX.Native)
 if "%BUILD_MODE%" == "" (
     :GENERATE
+    rem vs-tools adds an environment variable named `Platform` which messes with `dotnet run`.
+    set Platform=
     dotnet run --configuration Release --project Mochi.PhysX.Generator -- "external/PhysX/" "Mochi.PhysX/#Generated/" "Mochi.PhysX.Native/"
 )

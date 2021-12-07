@@ -4,11 +4,11 @@ setlocal
 :: Start in the directory containing this script
 cd %~dp0
 
-set BUILD_FOLDER=build-windows-x64
+set BUILD_FOLDER=..\obj\Mochi.PhysX.Native\cmake\win-x64
 
 :: Ensure build folder is protected from Directory.Build.* influences
 if not exist %BUILD_FOLDER% (
-    mkdir %BUILD_FOLDER% 2>NUL
+    mkdir %BUILD_FOLDER%
     echo ^<Project^>^</Project^> > %BUILD_FOLDER%/Directory.Build.props
     echo ^<Project^>^</Project^> > %BUILD_FOLDER%/Directory.Build.targets
     echo # > %BUILD_FOLDER%/Directory.Build.rsp
