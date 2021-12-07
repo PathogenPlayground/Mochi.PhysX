@@ -15,20 +15,20 @@ if not exist %BUILD_FOLDER% (
 )
 
 :: (Re)generate the Visual Studio solution and build in all configurations
-cmake -G "Visual Studio 16 2019" -S . -B %BUILD_FOLDER%
+cmake -G "Visual Studio 16 2019" -S . -B %BUILD_FOLDER% || exit /B 1
 echo ==============================================================================
 echo Building Mochi.PhysX.Native debug build...
 echo ==============================================================================
-cmake --build %BUILD_FOLDER% --config debug
+cmake --build %BUILD_FOLDER% --config debug || exit /B 1
 echo ==============================================================================
 echo Building Mochi.PhysX.Native checked build...
 echo ==============================================================================
-cmake --build %BUILD_FOLDER% --config checked
+cmake --build %BUILD_FOLDER% --config checked || exit /B 1
 echo ==============================================================================
 echo Building Mochi.PhysX.Native profile build...
 echo ==============================================================================
-cmake --build %BUILD_FOLDER% --config profile
+cmake --build %BUILD_FOLDER% --config profile || exit /B 1
 echo ==============================================================================
 echo Building Mochi.PhysX.Native release build...
 echo ==============================================================================
-cmake --build %BUILD_FOLDER% --config release
+cmake --build %BUILD_FOLDER% --config release || exit /B 1

@@ -46,6 +46,7 @@ jobs:
             os: windows-latest
             build-command: ./build.cmd
             physx-install-path: external/PhysX/physx/install/Mochi.PhysX.Windows.x64
+            physx-compiler-path: external/PhysX/physx/compiler/mochi-physx-win-x64
     name: PhysX ${{matrix.name}} ${{matrix.configuration.name}}
     runs-on: ${{matrix.os}}
     steps:
@@ -73,7 +74,7 @@ jobs:
         uses: actions/cache@v2
         with:
           #key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
-          key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-nohashfortesting
+          key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-nohashfortesting2
           path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
 
       - name: Build PhysX
@@ -81,15 +82,28 @@ jobs:
         run: ${{matrix.build-command}} ${{matrix.configuration.id}}
 
       # ----------------------------------------------------------------------- Upload artifacts
-      # For release builds we collect everything (the binaries and the headers)
-      # For everything else we collect just the binaries
-      # We collect the headers for release since the headers in the `install` directory are what we actually use to generate
-      - name: Collect PhysX build artifacts
-        if: steps.cached-physx.outputs.cache-hit != 'true' && matrix.configuration.id != 'release'
-        run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}/bin
-      - name: Collect PhysX build artifacts (Release)
+      - name: Collect PhysX binaries
+        if: steps.cached-physx.outputs.cache-hit != 'true'
+        run: tar -cvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar ${{matrix.physx-install-path}}/bin
+
+      # Due to the way PhysX builds and links its internal dependencies, the PDBs it emits don't include some internal object files
+      # However, the linker will be able to automagically find the debug info for these objects from these PDBs so we include them in our archive
+      # (Not including these causes LNK4099 to be spammed for all of these objects when Mochi.PhysX.Native is built and presumably causes these objects to be missing debug info.)
+      - name: Collect extra PhysX PDBs
+        if: steps.cached-physx.outputs.cache-hit != 'true' && runner.os == 'Windows'
+        run: tar -rvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar ${{matrix.physx-compiler-path}}/sdk_source_bin/${{matrix.configuration.id}}/*.pdb
+
+      # We only use the headers from the release build (they should match between all of them)
+      # (These are the headers we actually use to generate the bindings.)
+      - name: Collect PhysX headers
         if: steps.cached-physx.outputs.cache-hit != 'true' && matrix.configuration.id == 'release'
-        run: tar -czvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz ${{matrix.physx-install-path}}
+        run: |
+          tar -rvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar ${{matrix.physx-install-path}}/include
+          tar -rvf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar ${{matrix.physx-install-path}}/source
+
+      - name: Compress PhysX build artifacts
+        if: steps.cached-physx.outputs.cache-hit != 'true'
+        run: tar -cvzf physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar
 
       - name: Upload PhysX build artifacts
         uses: actions/upload-artifact@v2
