@@ -211,8 +211,9 @@ jobs:
       
       # ----------------------------------------------------------------------- Pack Mochi.PhysX.Ref
       # (This package is currently just a dummy package which references Mochi.PhysX.win-x64. Eventually it will be a least common denominator reference-only package.)
+      #TODO: Note really sure why --runtime is needed here. (Without it we get NETSDK1047) Also should we add it to the above packages too?
       - name: Restore Mochi.PhysX.Ref
-        run: dotnet restore Mochi.PhysX.Ref
+        run: dotnet restore Mochi.PhysX.Ref --runtime ${{matrix.rid}}
 
       - name: Pack Mochi.PhysX.Ref
         run: dotnet pack Mochi.PhysX.Ref --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=release
