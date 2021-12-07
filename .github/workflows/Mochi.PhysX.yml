@@ -227,8 +227,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v2
         with:
-          name: Mochi.PhysX.Native-${matrix.rid}
-          path: Mochi.PhysX.Native-${matrix.rid}.tar.gz
+          name: Mochi.PhysX.Native-${{matrix.rid}}
+          path: Mochi.PhysX.Native-${{matrix.rid}}.tar.gz
       
       - name: Collect NuGet Packages
         if: always()
