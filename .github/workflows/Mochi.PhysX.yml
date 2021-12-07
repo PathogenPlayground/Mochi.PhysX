@@ -74,7 +74,7 @@ jobs:
         uses: actions/cache@v2
         with:
           #key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
-          key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-nohashfortesting2
+          key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-nohashfortesting3
           path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
 
       - name: Build PhysX
