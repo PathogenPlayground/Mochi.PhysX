@@ -72,7 +72,8 @@ jobs:
         id: cached-physx
         uses: actions/cache@v2
         with:
-          key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
+          #key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
+          key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-nohashfortesting
           path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
 
       - name: Build PhysX
@@ -93,7 +94,8 @@ jobs:
       - name: Upload PhysX build artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: physx-${{matrix.rid}}-${{matrix.configuration.id}}
+          #name: physx-${{matrix.rid}}-${{matrix.configuration.id}}
+          name: physx-${{matrix.rid}}
           path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
           if-no-files-found: error
 
@@ -132,22 +134,26 @@ jobs:
             6.0.x
       
       # ----------------------------------------------------------------------- Download PhysX builds
-      - name: Download PhysX ${{matrix.name}} debug build
+      - name: Download PhysX ${{matrix.name}} builds
         uses: actions/download-artifact@v2
         with:
-          name: physx-${{matrix.rid}}-debug
-      - name: Download PhysX ${{matrix.name}} checked build
-        uses: actions/download-artifact@v2
-        with:
-          name: physx-${{matrix.rid}}-checked
-      - name: Download PhysX ${{matrix.name}} profile build
-        uses: actions/download-artifact@v2
-        with:
-          name: physx-${{matrix.rid}}-profile
-      - name: Download PhysX ${{matrix.name}} release build
-        uses: actions/download-artifact@v2
-        with:
-          name: physx-${{matrix.rid}}-release
+          name: physx-${{matrix.rid}}
+#      - name: Download PhysX ${{matrix.name}} debug build
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: physx-${{matrix.rid}}-debug
+#      - name: Download PhysX ${{matrix.name}} checked build
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: physx-${{matrix.rid}}-checked
+#      - name: Download PhysX ${{matrix.name}} profile build
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: physx-${{matrix.rid}}-profile
+#      - name: Download PhysX ${{matrix.name}} release build
+#        uses: actions/download-artifact@v2
+#        with:
+#          name: physx-${{matrix.rid}}-release
       
       - name: Extract PhysX Builds
         run: |

@@ -1,4 +1,4 @@
-@echo off
+::@echo off
 setlocal
 
 :: Start in the directory containing this script
