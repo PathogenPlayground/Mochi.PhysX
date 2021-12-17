@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mochi.PhysX.Native\Mochi.PhysX.Native.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Mochi.PhysX.Native\Mochi.PhysX.Native.csproj" />
   </ItemGroup>
 
 </Project>

@@ -11,8 +11,9 @@
     <MochiPhysXNativeFileName Condition="$(RuntimeIdentifier.StartsWith('linux-'))">libMochi.PhysX.Native.so</MochiPhysXNativeFileName>
     <MochiPhysXNativeFileName Condition="$(RuntimeIdentifier.StartsWith('osx-'))">Mochi.PhysX.Native.dll</MochiPhysXNativeFileName>
 
-    <!-- Default to the checked variant for the sample. Packages will be built for each variant. -->
-    <MochiPhysXNativeBuildVariant Condition="'$(MochiPhysXNativeBuildVariant)' == ''">checked</MochiPhysXNativeBuildVariant>
+    <!-- Default to the checked/release variant for the sample and for Mochi.PhysX's dependency. Packages will be built for each variant. -->
+    <MochiPhysXNativeBuildVariant Condition="'$(MochiPhysXNativeBuildVariant)' == '' and '$(Configuration)' == 'Debug'">checked</MochiPhysXNativeBuildVariant>
+    <MochiPhysXNativeBuildVariant Condition="'$(MochiPhysXNativeBuildVariant)' == ''">release</MochiPhysXNativeBuildVariant>
     <MochiPhysXNativeDirectory>$(MSBuildThisFileDirectory)../bin/Mochi.PhysX.Native/$(RuntimeIdentifier)/$(MochiPhysXNativeBuildVariant)/</MochiPhysXNativeDirectory>
 
     <MochiPhysXNativeFilePath Condition="'$(MochiPhysXNativeFileName)' != ''">$(MochiPhysXNativeDirectory)$(MochiPhysXNativeFileName)</MochiPhysXNativeFilePath>
@@ -50,7 +51,15 @@
     <!-- This package is only for the native runtime, don't try to build/pack the .NET assembly or specify a framework dependency -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <!--
+    Ideally we would do this and use ReferenceOutputAssembly="false" in Mochi.PhysX.csproj but that doesn't play nice with the NuGet pack task.
+    https://github.com/NuGet/Home/issues/8133 would let us do this the way we want.
+    The assembly is renamed to avoid conflicting with the native DLL.
+    The PlatformTarget is fixed for the same reasons as in Mochi.PhysX.
     <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
+    -->
+    <AssemblyName>Mochi.PhysX.Native.DummyAssembly</AssemblyName>
+    <PlatformTarget Condition="'$(PlatformTarget)' == ''">$(Platform)</PlatformTarget>
     <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
     
     <!-- Symbol packages only work with portable PDBs, which are .NET-only -->
