@@ -22,9 +22,11 @@ public unsafe static class MochiPhysX
 
     private static IntPtr NativeRuntimeHandle;
 
+    // This could be public, but it's very hard to use correctly and the developer could currently manually set their own import resolver.
+    // Let's wait to expose this based on a demonstrated need so that the API can stay flexible and so if someone thinks/knows they need this they'll feel more inclined to say something.
     /// <summary>Specifies a specific <see cref="NativeLibrary"/> handle to use for the PhysX runtime.</summary>
     /// <remarks>You must call this method before calling any PhysX functions.</remarks>
-    public static void UseSpecificRuntime(IntPtr nativeRuntimeHandle)
+    private static void UseSpecificRuntime(IntPtr nativeRuntimeHandle)
     {
         if (nativeRuntimeHandle == IntPtr.Zero)
         { throw new ArgumentException("The specified native runtime handle is invalid.", nameof(nativeRuntimeHandle)); }
