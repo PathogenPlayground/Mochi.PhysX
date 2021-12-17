@@ -189,12 +189,12 @@ jobs:
       - name: Build Mochi.PhysX.${{matrix.rid}}
         # MochiPhysXNativeBuildVariant here determines the native runtime variant which will be referenced by default
         # (It must be the same as the pack below.)
-        run: dotnet build Mochi.PhysX --no-restore --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=release
+        run: dotnet build Mochi.PhysX --no-restore --configuration Release /p:RuntimeIdentifier=win-x64
 
       # ----------------------------------------------------------------------- Pack Mochi.PhysX
       - name: Pack Mochi.PhysX.${{matrix.rid}}
         # See note about MochiPhysXNativeBuildVariant above
-        run: dotnet pack Mochi.PhysX --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=release
+        run: dotnet pack Mochi.PhysX --no-build --configuration Release /p:RuntimeIdentifier=win-x64
       
       # ----------------------------------------------------------------------- Pack Mochi.PhysX.Native variants
       - name: Restore Mochi.PhysX.Native
@@ -216,7 +216,7 @@ jobs:
         run: dotnet restore Mochi.PhysX.Ref --runtime ${{matrix.rid}}
 
       - name: Pack Mochi.PhysX.Ref
-        run: dotnet pack Mochi.PhysX.Ref --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=release
+        run: dotnet pack Mochi.PhysX.Ref --no-build --configuration Release /p:RuntimeIdentifier=win-x64
       
       # ----------------------------------------------------------------------- Upload Artifacts
       # All of these steps ignore failure so that we get what artifacts are available when things are broken
