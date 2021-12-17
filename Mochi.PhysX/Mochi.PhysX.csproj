@@ -6,7 +6,8 @@
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
 
     <!--
-      //TODO: This is a temporary workaround to force our output assembly to be AnyCPU even though it realistically isn't.
+      //TODO:
+      This is a temporary workaround to force our output assembly to be AnyCPU even though it realistically isn't.
       This avoids causing consumers to get a warning about this assembly being x64-only when their project is AnyCPU.
       We don't want to make people change their projects to be x64-only because eventually we want to provide an
       AnyCPU reference assembly with this one used at runtime.
@@ -22,7 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mochi.PhysX.Native\Mochi.PhysX.Native.csproj" />
+    <ProjectReference Include="..\Mochi.PhysX.Native\Mochi.PhysX.Native.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

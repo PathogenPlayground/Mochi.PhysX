@@ -50,6 +50,9 @@
     <!-- This package is only for the native runtime, don't try to build/pack the .NET assembly or specify a framework dependency -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+    
     <!-- Symbol packages only work with portable PDBs, which are .NET-only -->
     <IncludeSymbols>false</IncludeSymbols>
   </PropertyGroup>
