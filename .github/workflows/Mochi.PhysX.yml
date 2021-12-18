@@ -229,6 +229,7 @@ jobs:
         with:
           name: Mochi.PhysX.Native-${{matrix.rid}}
           path: Mochi.PhysX.Native-${{matrix.rid}}.tar.gz
+          if-no-files-found: error
       
       - name: Collect NuGet Packages
         if: always()
@@ -241,3 +242,14 @@ jobs:
           if-no-files-found: error
           path: Mochi.PhysX-packages-${{matrix.rid}}.tar.gz
 
+      - name: Collect Generated Output
+        if: always()
+        #TODO: We should use the Biohazrd file writes log for this
+        run: tar -cvzf Mochi.PhysX-${{matrix.rid}}-generated.tar.gz Mochi.PhysX/#Generated Mochi.PhysX.Native/*.gen.*
+      - name: Upload Generated Output
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: Mochi.PhysX-${{matrix.rid}}-generated
+          path: Mochi.PhysX-${{matrix.rid}}-generated.tar.gz
+          if-no-files-found: error
