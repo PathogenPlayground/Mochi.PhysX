@@ -220,8 +220,10 @@ jobs:
 
       # ----------------------------------------------------------------------- Run the sample as a smoke test
       # We do this last so it can't indirectly affect the build process of any packages
-      - name: Test Mochi.PhysX.Sample
-        run: dotnet run Mochi.PhysX.Sample
+      - name: Test Mochi.PhysX.Sample (Debug)
+        run: dotnet run --project Mochi.PhysX.Sample --configuration Debug
+      - name: Test Mochi.PhysX.Sample (Release)
+        run: dotnet run --project Mochi.PhysX.Sample --configuration Release
 
       # ----------------------------------------------------------------------- Upload artifacts
       # All of these steps ignore failure so that we get what artifacts are available when things are broken
