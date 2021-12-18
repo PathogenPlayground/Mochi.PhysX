@@ -253,3 +253,177 @@ jobs:
           name: Mochi.PhysX-${{matrix.rid}}-generated
           path: Mochi.PhysX-${{matrix.rid}}-generated.tar.gz
           if-no-files-found: error
+
+  # =====================================================================================================================================================================
+  # Publish NuGet Packages to GitHub
+  # =====================================================================================================================================================================
+  publish-packages-github:
+    name: Publish to GitHub
+    runs-on: ubuntu-latest
+    needs: build-mochi-physx
+    # Pushes always publish CI packages (configure-build.py will add the branch name to the version string for branches besides main)
+    # Published releases always publish packages
+    # A manual workflow only publishes packages if explicitly enabled
+    if: github.event_name == 'push' || github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.will_publish_packages == 'true')
+    steps:
+      # ----------------------------------------------------------------------- Setup .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+
+      # ----------------------------------------------------------------------- Download built packages
+      - name: Download built packages
+        uses: actions/download-artifact@v2
+        with:
+          name: Packages
+      - name: Extract build packages
+        run: tar --keep-old-files -xf Mochi.PhysX-packages-*.tar.gz
+
+      # ----------------------------------------------------------------------- Upload release assets
+      - name: Upload release assets
+        if: github.event_name == 'release'
+        uses: actions/github-script@v4
+        with:
+          user-agent: actions/github-script for ${{github.repository}}
+          script: |
+            const fs = require('fs').promises;
+            const path = require('path');
+            const upload_url = context.payload.release.upload_url;
+
+            if (!upload_url) {
+                throw "Missing release asset upload URL!";
+            }
+
+            for (let filePath of await fs.readdir('.')) {
+                const fileExtension = path.extname(filePath);
+                if (fileExtension != '.nupkg' && fileExtension != '.snupkg') {
+                    continue;
+                }
+
+                console.log(`Uploading '${filePath}'`);
+                const contentLength = (await fs.stat(filePath)).size;
+                const fileContents = await fs.readFile(filePath);
+                await github.repos.uploadReleaseAsset({
+                    url: upload_url,
+                    headers: {
+                        'content-type': 'application/octet-stream',
+                        'content-length': contentLength
+                    },
+                    name: path.basename(filePath),
+                    data: fileContents
+                });
+            }
+
+      # ----------------------------------------------------------------------- Push to GitHub Packages
+      - name: Push to GitHub Packages
+        run: dotnet nuget push "packages/*.nupkg" --skip-duplicate --no-symbols true --api-key ${{secrets.GITHUB_TOKEN}} --source https://nuget.pkg.github.com/${{github.repository_owner}}
+        env:
+          # This is a workaround for https://github.com/NuGet/Home/issues/9775
+          DOTNET_SYSTEM_NET_HTTP_USESOCKETSHTTPHANDLER: 0
+
+  # =====================================================================================================================================================================
+  # Publish NuGet Packages to NuGet.org
+  # =====================================================================================================================================================================
+  publish-packages-nuget-org:
+    name: Publish to NuGet.org
+    runs-on: ubuntu-latest
+    needs: build-mochi-physx
+    environment: NuGet.org
+    # Release builds always publish packages to NuGet.org
+    # Workflow dispatch builds will only publish packages if enabled and an explicit version number is given
+    # Make sure this logic matches configure-build.py to ensure we don't accidentally depend on sibling CI pre-release packages
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.will_publish_packages == 'true' && github.event.inputs.version != '')
+    steps:
+      # ----------------------------------------------------------------------- Setup .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+
+      # ----------------------------------------------------------------------- Download built packages
+      - name: Download built packages
+        uses: actions/download-artifact@v2
+        with:
+          name: Packages
+      - name: Extract build packages
+        run: tar --keep-old-files -xf Mochi.PhysX-packages-*.tar.gz
+
+      # ----------------------------------------------------------------------- Push to NuGet.org
+      - name: Push to NuGet.org
+        run: dotnet nuget push "packages/*.nupkg" --api-key ${{secrets.NUGET_API_KEY}} --source ${{secrets.NUGET_API_URL}}
+        env:
+          # This is a workaround for https://github.com/NuGet/Home/issues/9775
+          DOTNET_SYSTEM_NET_HTTP_USESOCKETSHTTPHANDLER: 0
+
+  # =====================================================================================================================================================================
+  # Publish Release Assets
+  # =====================================================================================================================================================================
+  publish-release-assets:
+    name: Publish Release Assets
+    runs-on: ubuntu-latest
+    needs: build-mochi-physx
+    if: github.event_name == 'release'
+    steps:
+      # ----------------------------------------------------------------------- Download all artifacts
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+
+      # ----------------------------------------------------------------------- Upload release assets
+      - name: Upload release assets
+        uses: actions/github-script@v4
+        with:
+          user-agent: actions/github-script for ${{github.repository}}
+          script: |
+            const fs = require('fs').promises;
+            const path = require('path');
+            const uploadUrl = context.payload.release.upload_url;
+
+            if (!uploadUrl) {
+                throw "Missing release asset upload URL!";
+            }
+
+            for (let filePath of await fs.readdir('.')) {
+                console.log(`Uploading '${filePath}'`);
+                const contentLength = (await fs.stat(filePath)).size;
+                const fileContents = await fs.readFile(filePath);
+                await github.repos.uploadReleaseAsset({
+                    url: uploadUrl,
+                    headers: {
+                        'content-type': 'application/octet-stream',
+                        'content-length': contentLength
+                    },
+                    name: path.basename(filePath),
+                    data: fileContents
+                });
+            }
+
+  # =====================================================================================================================================================================
+  # Send CI Failure Notification
+  # =====================================================================================================================================================================
+  send-ci-failure-notification:
+    name: Send CI Failure Notification
+    needs: [build-physx, build-mochi-physx, publish-packages-github, publish-packages-nuget-org, publish-release-assets]
+    if: failure() && github.event_name != 'pull_request'
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      # ----------------------------------------------------------------------- Checkout
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      # ----------------------------------------------------------------------- Setup Python
+      - name: Setup Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      # ----------------------------------------------------------------------- Send CI Failure Notification
+      - name: Send Notification
+        run: python .github/workflows/send-ci-failure-notification.py
+        env:
+          webhook_url: ${{secrets.TEAMS_WEBHOOK_URL}}
+          github_organization: ${{github.repository_owner}}
+          github_repo: ${{github.repository}}
+          github_workflow_name: ${{github.workflow}}
+          github_run_number: ${{github.run_id}}
