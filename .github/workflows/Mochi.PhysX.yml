@@ -73,7 +73,7 @@ jobs:
         id: cached-physx
         uses: actions/cache@v2
         with:
-          #key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
+          #TODO: key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
           key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-nohashfortesting3
           path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
 
@@ -213,9 +213,11 @@ jobs:
       # (This package is currently just a dummy package which references Mochi.PhysX.win-x64. Eventually it will be a least common denominator reference-only package.)
       #TODO: Note really sure why --runtime is needed here. (Without it we get NETSDK1047) Also should we add it to the above packages too?
       - name: Restore Mochi.PhysX.Ref
+        if: matrix.rid == 'win-x64'
         run: dotnet restore Mochi.PhysX.Ref --runtime ${{matrix.rid}}
 
       - name: Pack Mochi.PhysX.Ref
+        if: matrix.rid == 'win-x64'
         run: dotnet pack Mochi.PhysX.Ref --no-build --configuration Release /p:RuntimeIdentifier=win-x64
       
       # ----------------------------------------------------------------------- Upload Artifacts
@@ -279,41 +281,6 @@ jobs:
           name: Packages
       - name: Extract build packages
         run: tar --keep-old-files -xf Mochi.PhysX-packages-*.tar.gz
-
-      # ----------------------------------------------------------------------- Upload release assets
-      - name: Upload release assets
-        if: github.event_name == 'release'
-        uses: actions/github-script@v4
-        with:
-          user-agent: actions/github-script for ${{github.repository}}
-          script: |
-            const fs = require('fs').promises;
-            const path = require('path');
-            const upload_url = context.payload.release.upload_url;
-
-            if (!upload_url) {
-                throw "Missing release asset upload URL!";
-            }
-
-            for (let filePath of await fs.readdir('.')) {
-                const fileExtension = path.extname(filePath);
-                if (fileExtension != '.nupkg' && fileExtension != '.snupkg') {
-                    continue;
-                }
-
-                console.log(`Uploading '${filePath}'`);
-                const contentLength = (await fs.stat(filePath)).size;
-                const fileContents = await fs.readFile(filePath);
-                await github.repos.uploadReleaseAsset({
-                    url: upload_url,
-                    headers: {
-                        'content-type': 'application/octet-stream',
-                        'content-length': contentLength
-                    },
-                    name: path.basename(filePath),
-                    data: fileContents
-                });
-            }
 
       # ----------------------------------------------------------------------- Push to GitHub Packages
       - name: Push to GitHub Packages
@@ -380,23 +347,34 @@ jobs:
             const uploadUrl = context.payload.release.upload_url;
 
             if (!uploadUrl) {
-                throw "Missing release asset upload URL!";
+              throw "Missing release asset upload URL!";
             }
 
-            for (let filePath of await fs.readdir('.')) {
+            function uploadAssets(directoryPath) {
+              for (let filePath of await fs.readdir(directoryPath)) {
+                filePath = path.join(directoryPath, filePath);
+                const stats = await fs.stat(filePath);
+
+                if (stats.isDirectory()) {
+                  console.log(`Entering directory '${filePath}'`);
+                  uploadAssets(filePath);
+                  continue;
+                }
+
                 console.log(`Uploading '${filePath}'`);
-                const contentLength = (await fs.stat(filePath)).size;
-                const fileContents = await fs.readFile(filePath);
                 await github.repos.uploadReleaseAsset({
-                    url: uploadUrl,
-                    headers: {
-                        'content-type': 'application/octet-stream',
-                        'content-length': contentLength
-                    },
-                    name: path.basename(filePath),
-                    data: fileContents
+                  url: uploadUrl,
+                  headers: {
+                    'content-type': 'application/octet-stream',
+                    'content-length': stats.size
+                  },
+                  name: path.basename(filePath),
+                  data: await fs.readFile(filePath)
                 });
+              }
             }
+
+            uploadAssets('.');
 
   # =====================================================================================================================================================================
   # Send CI Failure Notification
