@@ -136,7 +136,7 @@ jobs:
         #TODO: Actually we need them for Biohazrd still. Remove this once we switch to NuGet packages for it.
         with:
           submodules: recursive
-      
+
       # ----------------------------------------------------------------------- Setup .NET
       - name: Setup .NET
         if: matrix.platform.skip-tool-install != true
@@ -146,13 +146,13 @@ jobs:
           dotnet-version: |
             5.0.x
             6.0.x
-      
+
       # ----------------------------------------------------------------------- Download PhysX builds
       - name: Download PhysX ${{matrix.name}} builds
         uses: actions/download-artifact@v2
         with:
           name: physx-${{matrix.rid}}
-      
+
       - name: Extract PhysX Builds
         run: |
           tar --keep-old-files -xf physx-${{matrix.rid}}-debug.tar.gz
@@ -174,17 +174,17 @@ jobs:
       # ----------------------------------------------------------------------- Generate Mochi.PhysX
       - name: Restore Mochi.PhysX.Generator
         run: dotnet restore Mochi.PhysX.Generator
-      
+
       - name: Build Mochi.PhysX.Generator
         run: dotnet build Mochi.PhysX.Generator --configuration Release
-      
+
       - name: Generate Mochi.PhysX
         run: ${{matrix.build-command}} generate
-      
+
       # ----------------------------------------------------------------------- Build Mochi.PhysX
       - name: Restore Mochi.PhysX.${{matrix.rid}}
         run: dotnet restore Mochi.PhysX --runtime ${{matrix.rid}}
-      
+
       - name: Build Mochi.PhysX.${{matrix.rid}}
         # MochiPhysXNativeBuildVariant here determines the native runtime variant which will be referenced by default
         # (It must be the same as the pack below.)
@@ -194,7 +194,7 @@ jobs:
       - name: Pack Mochi.PhysX.${{matrix.rid}}
         # See note about MochiPhysXNativeBuildVariant above
         run: dotnet pack Mochi.PhysX --no-build --configuration Release /p:RuntimeIdentifier=win-x64
-      
+
       # ----------------------------------------------------------------------- Pack Mochi.PhysX.Native variants
       - name: Restore Mochi.PhysX.Native
         run: dotnet restore Mochi.PhysX.Native --runtime ${{matrix.rid}}
@@ -207,7 +207,7 @@ jobs:
         run: dotnet pack Mochi.PhysX.Native --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=profile
       - name: Pack Mochi.PhysX.Native.${{matrix.rid}}
         run: dotnet pack Mochi.PhysX.Native --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=release
-      
+
       # ----------------------------------------------------------------------- Pack Mochi.PhysX.Ref
       # (This package is currently just a dummy package which references Mochi.PhysX.win-x64. Eventually it will be a least common denominator reference-only package.)
       - name: Restore Mochi.PhysX.Ref
@@ -217,24 +217,29 @@ jobs:
       - name: Pack Mochi.PhysX.Ref
         if: matrix.rid == 'win-x64'
         run: dotnet pack Mochi.PhysX.Ref --no-build --configuration Release /p:RuntimeIdentifier=win-x64
-      
-      # ----------------------------------------------------------------------- Upload Artifacts
+
+      # ----------------------------------------------------------------------- Run the sample as a smoke test
+      # We do this last so it can't indirectly affect the build process of any packages
+      - name: Test Mochi.PhysX.Sample
+        run: dotnet run Mochi.PhysX.Sample
+
+      # ----------------------------------------------------------------------- Upload artifacts
       # All of these steps ignore failure so that we get what artifacts are available when things are broken
-      - name: Collect Native Binaries
+      - name: Collect native binaries
         if: always()
         run: tar -cvzf Mochi.PhysX.Native-${{matrix.rid}}.tar.gz bin/Mochi.PhysX.Native
-      - name: Upload Mochi.PhysX.Native Binaries
+      - name: Upload native binaries
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: Mochi.PhysX.Native-${{matrix.rid}}
           path: Mochi.PhysX.Native-${{matrix.rid}}.tar.gz
           if-no-files-found: error
-      
-      - name: Collect NuGet Packages
+
+      - name: Collect NuGet packages
         if: always()
         run: tar -cvzf Mochi.PhysX-packages-${{matrix.rid}}.tar.gz packages
-      - name: Upload NuGet Packages
+      - name: Upload NuGet packages
         if: always()
         uses: actions/upload-artifact@v2
         with:
@@ -242,11 +247,11 @@ jobs:
           if-no-files-found: error
           path: Mochi.PhysX-packages-${{matrix.rid}}.tar.gz
 
-      - name: Collect Generated Output
+      - name: Collect generated output
         if: always()
         #TODO: We should use the Biohazrd file writes log for this
         run: tar -cvzf Mochi.PhysX-${{matrix.rid}}-generated.tar.gz Mochi.PhysX/#Generated Mochi.PhysX.Native/*.gen.*
-      - name: Upload Generated Output
+      - name: Upload generated output
         if: always()
         uses: actions/upload-artifact@v2
         with:
