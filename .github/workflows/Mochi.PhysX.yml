@@ -183,6 +183,10 @@ jobs:
 
       # ----------------------------------------------------------------------- Build Mochi.PhysX
       - name: Restore Mochi.PhysX.${{matrix.rid}}
+        # This is a workaround for the fact that the NuGet package name of Mochi.PhysX.Native changes depending on the configuration.
+        # Ideally we'd just manually specify the dependency but NuGet makes that really annoying to do. See https://github.com/NuGet/Home/issues/8133
+        env:
+          Configuration: Release
         run: dotnet restore Mochi.PhysX --runtime ${{matrix.rid}}
 
       - name: Build Mochi.PhysX.${{matrix.rid}}
