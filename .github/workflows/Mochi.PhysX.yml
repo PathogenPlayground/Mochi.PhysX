@@ -73,8 +73,7 @@ jobs:
         id: cached-physx
         uses: actions/cache@v2
         with:
-          #TODO: key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
-          key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-nohashfortesting3
+          key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
           path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
 
       - name: Build PhysX
@@ -184,7 +183,7 @@ jobs:
       
       # ----------------------------------------------------------------------- Build Mochi.PhysX
       - name: Restore Mochi.PhysX.${{matrix.rid}}
-        run: dotnet restore Mochi.PhysX
+        run: dotnet restore Mochi.PhysX --runtime ${{matrix.rid}}
       
       - name: Build Mochi.PhysX.${{matrix.rid}}
         # MochiPhysXNativeBuildVariant here determines the native runtime variant which will be referenced by default
@@ -198,7 +197,7 @@ jobs:
       
       # ----------------------------------------------------------------------- Pack Mochi.PhysX.Native variants
       - name: Restore Mochi.PhysX.Native
-        run: dotnet restore Mochi.PhysX.Native
+        run: dotnet restore Mochi.PhysX.Native --runtime ${{matrix.rid}}
 
       - name: Pack Mochi.PhysX.Native.${{matrix.rid}}-debug
         run: dotnet pack Mochi.PhysX.Native --no-build --configuration Release /p:RuntimeIdentifier=win-x64 /p:MochiPhysXNativeBuildVariant=debug
@@ -211,7 +210,6 @@ jobs:
       
       # ----------------------------------------------------------------------- Pack Mochi.PhysX.Ref
       # (This package is currently just a dummy package which references Mochi.PhysX.win-x64. Eventually it will be a least common denominator reference-only package.)
-      #TODO: Note really sure why --runtime is needed here. (Without it we get NETSDK1047) Also should we add it to the above packages too?
       - name: Restore Mochi.PhysX.Ref
         if: matrix.rid == 'win-x64'
         run: dotnet restore Mochi.PhysX.Ref --runtime ${{matrix.rid}}

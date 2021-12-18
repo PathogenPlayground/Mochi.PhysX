@@ -91,12 +91,7 @@ string physXBinariesDirectoryPath = Path.Combine(physXInstallRoot, "bin");
 
 string[] includeDirectories =
 {
-#if false
-    Path.Combine(physXSdkRoot, "physx", "include"),
-    Path.Combine(physXSdkRoot, "pxshared", "include")
-#else
     Path.Combine(physXInstallRoot, "include")
-#endif
 };
 
 foreach (string includeDirectory in includeDirectories)
