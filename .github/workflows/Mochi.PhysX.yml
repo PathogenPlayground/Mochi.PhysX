@@ -21,7 +21,7 @@ env:
   ContinuousIntegrationBuild: true
   # This URL will be added to the restore sources if it isn't the official NuGet.org
   # (This is mainly intended to allow using the NuGet.org test servers to test CI in forks.)
-  CiNuGetApiUrl: ${{secrets.NUGET_API_URL}}
+  CiNuGetApiUrl: ${{vars.NUGET_API_URL}}
 jobs:
   # =====================================================================================================================================================================
   # Build PhysX
@@ -43,7 +43,7 @@ jobs:
         include:
           - rid: win-x64
             name: Windows x64
-            os: windows-2019
+            os: windows-2022
             build-command: ./build.cmd
             physx-install-path: external/PhysX/physx/install/Mochi.PhysX.Windows.x64
             physx-compiler-path: external/PhysX/physx/compiler/mochi-physx-win-x64
@@ -52,16 +52,15 @@ jobs:
     steps:
       # ----------------------------------------------------------------------- Checkout
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       # ----------------------------------------------------------------------- Setup Python
-      - name: Setup Python 3.8
-        if: matrix.platform.skip-tool-install != true
-        uses: actions/setup-python@v2
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.8'
+          python-version: '3.11'
 
       # ----------------------------------------------------------------------- Get PhysX revision
       - name: Get PhysX revision
@@ -71,7 +70,7 @@ jobs:
       # ----------------------------------------------------------------------- Build PhysX
       - name: Load cached PhysX build outputs
         id: cached-physx
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           key: physx-${{matrix.rid}}-${{matrix.configuration.id}}-${{steps.physx.outputs.revision}}-${{hashFiles('build.*', 'tooling/*.cmd', 'tooling/*.sh', 'Mochi.PhysX.Modifications/**')}}
           path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
@@ -107,7 +106,7 @@ jobs:
         run: gzip physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar
 
       - name: Upload PhysX build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: physx-${{matrix.rid}}
           path: physx-${{matrix.rid}}-${{matrix.configuration.id}}.tar.gz
@@ -123,7 +122,7 @@ jobs:
       matrix:
         include:
           - name: Windows x64
-            os: windows-2019
+            os: windows-2022
             rid: win-x64
             build-command: ./build.cmd
     name: Mochi.PhysX ${{matrix.name}}
@@ -132,7 +131,7 @@ jobs:
       # ----------------------------------------------------------------------- Checkout
       - name: Checkout
         # We intentionally don't checkout submodules here, Mochi.PhysX.Generator should only use outputs from building PhysX
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         #TODO: Actually we need them for Biohazrd still. Remove this once we switch to NuGet packages for it.
         with:
           submodules: recursive
@@ -140,16 +139,22 @@ jobs:
       # ----------------------------------------------------------------------- Setup .NET
       - name: Setup .NET
         if: matrix.platform.skip-tool-install != true
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
-          # We need both the .NET 5 and .NET 6 SDKs because we currently use C# 10 while targeting .NET 5
+          # We need both the .NET 5 and .NET 8 SDKs because we currently use C# 10 while targeting .NET 5
           dotnet-version: |
-            5.0.x
-            6.0.x
+            5.x
+            8.x
+
+      # ----------------------------------------------------------------------- Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       # ----------------------------------------------------------------------- Download PhysX builds
       - name: Download PhysX ${{matrix.name}} builds
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: physx-${{matrix.rid}}
 
@@ -233,7 +238,7 @@ jobs:
         run: tar -cvzf Mochi.PhysX.Native-${{matrix.rid}}.tar.gz bin/Mochi.PhysX.Native
       - name: Upload native binaries
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Mochi.PhysX.Native-${{matrix.rid}}
           path: Mochi.PhysX.Native-${{matrix.rid}}.tar.gz
@@ -244,7 +249,7 @@ jobs:
         run: tar -cvzf Mochi.PhysX-packages-${{matrix.rid}}.tar.gz packages
       - name: Upload NuGet packages
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Packages
           if-no-files-found: error
@@ -256,7 +261,7 @@ jobs:
         run: tar -cvzf Mochi.PhysX-${{matrix.rid}}-generated.tar.gz Mochi.PhysX/#Generated Mochi.PhysX.Native/*.gen.*
       - name: Upload generated output
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: Mochi.PhysX-${{matrix.rid}}-generated
           path: Mochi.PhysX-${{matrix.rid}}-generated.tar.gz
@@ -276,13 +281,13 @@ jobs:
     steps:
       # ----------------------------------------------------------------------- Setup .NET
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: 8.x
 
       # ----------------------------------------------------------------------- Download built packages
       - name: Download built packages
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: Packages
       - name: Extract built packages
@@ -310,13 +315,13 @@ jobs:
     steps:
       # ----------------------------------------------------------------------- Setup .NET
       - name: Setup .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 5.0.x
+          dotnet-version: 8.x
 
       # ----------------------------------------------------------------------- Download built packages
       - name: Download built packages
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: Packages
       - name: Extract built packages
@@ -324,7 +329,7 @@ jobs:
 
       # ----------------------------------------------------------------------- Push to NuGet.org
       - name: Push to NuGet.org
-        run: dotnet nuget push "packages/*.nupkg" --api-key ${{secrets.NUGET_API_KEY}} --source ${{secrets.NUGET_API_URL}}
+        run: dotnet nuget push "packages/*.nupkg" --api-key ${{secrets.NUGET_API_KEY}} --source ${{vars.NUGET_API_URL}}
         env:
           # This is a workaround for https://github.com/NuGet/Home/issues/9775
           DOTNET_SYSTEM_NET_HTTP_USESOCKETSHTTPHANDLER: 0
@@ -340,74 +345,8 @@ jobs:
     steps:
       # ----------------------------------------------------------------------- Download all artifacts
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
 
       # ----------------------------------------------------------------------- Upload release assets
       - name: Upload release assets
-        uses: actions/github-script@v4
-        with:
-          user-agent: actions/github-script for ${{github.repository}}
-          script: |
-            const fs = require('fs').promises;
-            const path = require('path');
-            const uploadUrl = context.payload.release.upload_url;
-
-            if (!uploadUrl) {
-              throw "Missing release asset upload URL!";
-            }
-
-            async function uploadAssets(directoryPath) {
-              for (let filePath of await fs.readdir(directoryPath)) {
-                filePath = path.join(directoryPath, filePath);
-                const stats = await fs.stat(filePath);
-
-                if (stats.isDirectory()) {
-                  console.log(`Entering '${filePath}'`);
-                  await uploadAssets(filePath);
-                  continue;
-                }
-
-                console.log(`Uploading '${filePath}'`);
-                await github.repos.uploadReleaseAsset({
-                  url: uploadUrl,
-                  headers: {
-                    'content-type': 'application/octet-stream',
-                    'content-length': stats.size
-                  },
-                  name: path.basename(filePath),
-                  data: await fs.readFile(filePath)
-                });
-              }
-            }
-
-            await uploadAssets('.');
-
-  # =====================================================================================================================================================================
-  # Send CI Failure Notification
-  # =====================================================================================================================================================================
-  send-ci-failure-notification:
-    name: Send CI Failure Notification
-    needs: [build-physx, build-mochi-physx, publish-packages-github, publish-packages-nuget-org, publish-release-assets]
-    if: failure() && github.event_name != 'pull_request'
-    continue-on-error: true
-    runs-on: ubuntu-latest
-    steps:
-      # ----------------------------------------------------------------------- Checkout
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      # ----------------------------------------------------------------------- Setup Python
-      - name: Setup Python 3.8
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-
-      # ----------------------------------------------------------------------- Send CI Failure Notification
-      - name: Send Notification
-        run: python .github/workflows/send-ci-failure-notification.py
-        env:
-          webhook_url: ${{secrets.TEAMS_WEBHOOK_URL}}
-          github_organization: ${{github.repository_owner}}
-          github_repo: ${{github.repository}}
-          github_workflow_name: ${{github.workflow}}
-          github_run_number: ${{github.run_id}}
+        run: gh release upload ${{github.event.release.tag_name}} **/* --clobber
